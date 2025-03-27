@@ -4,12 +4,13 @@ def max_profit_greedy_algorithm(prices):
     max_profit = 0
 
     for price in prices:
-        min_price = min(min_price, prices)
-        max_profit = max(max_profit, prices - min_price)
+        min_price = min(min_price, price)
+        max_profit = max(max_profit, price - min_price)
 
-        return max_profit
+    return max_profit
 
 def max_profit_dynamic_proigramming(prices):
+    print(prices)
     profit = 0
 
     for i in range(1, len(prices)):

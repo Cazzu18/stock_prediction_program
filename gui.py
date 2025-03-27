@@ -11,7 +11,7 @@ import alg as alg
 
 def display_result(result_text):
     result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12))
-    result_label.pack()
+    result_label.grid(row=4, column=0, columnspan=2)
 
 def perform_analysis():
     ticker = ticker_entry.get()
@@ -34,13 +34,15 @@ def perform_analysis():
             return
         
         #converting pandas series to a list of floats
-        #print(prices)
-        price = prices.values.astype(float)
-        print(price)
+        price = prices.squeeze().astype(float).tolist()
+        
+        #debugging print statements
+        print(prices)
+        print(type(prices))
 
         #calculating profits
-        greedy_profit = alg.max_profit_greedy_algorithm(price)
-        dp_profit = alg.max_profit_dynamic_proigramming(price)
+        greedy_profit = float(alg.max_profit_greedy_algorithm(price))
+        dp_profit = float(alg.max_profit_dynamic_proigramming(price))
 
         #displaying results
         display_result(f"Greedy Profit: ${greedy_profit:.2f}\nDP Profit: ${dp_profit:.2f}")
