@@ -33,12 +33,14 @@ def perform_analysis():
             CTkMessagebox(title="Error", message="No data found for the ticker and date range", icon="cancel")
             return
         
-        #converting pandas series toa list of floats
-        prices = prices.astype(float)
+        #converting pandas series to a list of floats
+        #print(prices)
+        price = prices.values.astype(float)
+        print(price)
 
         #calculating profits
-        greedy_profit = alg.max_profit_greedy_algorithm(prices)
-        dp_profit = alg.max_profit_dynamic_proigramming(prices)
+        greedy_profit = alg.max_profit_greedy_algorithm(price)
+        dp_profit = alg.max_profit_dynamic_proigramming(price)
 
         #displaying results
         display_result(f"Greedy Profit: ${greedy_profit:.2f}\nDP Profit: ${dp_profit:.2f}")
