@@ -4,6 +4,7 @@ from CTkMessagebox import CTkMessagebox
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime
+from dash import Dash, doc, html, Input, Output
 
 import stock_data as sd
 import alg as alg
@@ -36,10 +37,6 @@ def perform_analysis():
         #converting pandas series to a list of floats
         price = prices.squeeze().astype(float).tolist()
         
-        #debugging print statements
-        print(prices)
-        print(type(prices))
-
         #calculating profits
         greedy_profit = float(alg.max_profit_greedy_algorithm(price))
         dp_profit = float(alg.max_profit_dynamic_proigramming(price))
@@ -49,19 +46,31 @@ def perform_analysis():
         
         #create an interactice plotly figure
         fig = make_subplots(rows=1, cols=1)
-        fig.add_trace(go.Scatter(x=prices.index, y = prices.values, mode='lines', name=ticker, line=dict(color='blue')))
+        
+        x_dates = prices.index.tolist()
+
+        fig.add_trace(go.Scatter(x=x_dates, y=price, mode='lines', name=ticker, line=dict(color='blue')))
         fig.update_layout(title=f"Stock Price Trend for {ticker}", xaxis_title="Date", yaxis_title="Closing Price")
         fig.show()
-
+        
     except Exception as e:
         CTkMessagebox(title="Error", message=str(e), icon="cancel")
 
 #creating window and declaring specifications
 app = CTk()
-app.geometry("500x400")
 app.title("Stock Market Predictor")
 set_appearance_mode("dark")
 
+window_width = 600
+window_height = 500
+screen_width = app.winfo_screenwidth() #returns the width of the screen in pixels
+screen_height = app.winfo_screenheight() #returns the height of the screen in pixels
+
+#calculating the x and y coordinates to center the window
+x = (screen_width / 2) - (window_width / 2)
+y = (screen_height / 2) - (window_height / 2)
+
+app.geometry(f'{window_width}x{window_height}+{int(x)}+{int(y)}')
 #labels and entry fields
 ctk.CTkLabel(master=app, text="Stock Ticker").grid(row=0,column=0)
 ticker_entry = CTkEntry(master=app, placeholder_text="Ticker")
