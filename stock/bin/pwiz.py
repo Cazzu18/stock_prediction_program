@@ -1,4 +1,4 @@
-#!/Users/edmundlongsworth/Documents/GitHub/stock_prediction_program/stock/bin/python
+#!/Users/edmundlongsworth/Documents/GitHub/stock_prediction_program/stock/bin/python3.13
 
 import datetime
 import os

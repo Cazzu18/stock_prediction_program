@@ -29,7 +29,7 @@ def open_browser():
 def run_dash_app(ticker, x_dates, price):
     dash_app = Dash(__name__)
 
-    #create the figure first to apply customizations
+    #creating the figure first to apply customizations
     fig = go.Figure(data=[
         go.Scatter(
             x = x_dates,
@@ -54,8 +54,8 @@ def run_dash_app(ticker, x_dates, price):
             xaxis_title="Date",
             yaxis_title="Closing Price",
             xaxis = dict(
-                showgrid = True, #because 
-                gridcolor='rgba(100, 100, 100, 0.5)', # to make grid lines lighter
+                showgrid = True,
+                gridcolor='rgba(100, 100, 100, 0.5)', #to make grid lines lighter
                 color = 'white'
             ),
 
@@ -76,7 +76,7 @@ def run_dash_app(ticker, x_dates, price):
             plot_bgcolor='rgb(17,17,17)',  #match dark theme background
             margin=dict(l=40, r=40, t=60, b=40), #adjusting margins
             hovermode='x unified', #improved hover information display
-            template='plotly_dark', # Apply a pre-defined dark theme        
+            template='plotly_dark', #applying a pre-defined dark theme        
         
     )
 
