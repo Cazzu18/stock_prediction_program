@@ -12,11 +12,11 @@ import stock_data as sd
 import alg as alg
 
 
+result_label = None
+
 def display_result(result_text):
     app.after(0, lambda: result_label.configure(text=result_text))
 
-
-result_label = None
 
 def open_browser():
     try:
@@ -94,9 +94,8 @@ def run_dash_app(ticker, x_dates, price):
     
 
     dash_app.run(debug=True, use_reloader=False)
-
-
-def perform_analysis():
+    
+def check_fields():
     global result_label
     ticker = ticker_entry.get()
     start_date = start_date_entry.get()
@@ -105,47 +104,78 @@ def perform_analysis():
     if not ticker or not start_date or not end_date:
         CTkMessagebox(title="Error", message="Please enter all fields!", icon="cancel")
         return
-    try:
-        start_date_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_date_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
+    
+    
+def process_input():
+    ticker = ticker_entry.get()
+    start_date = start_date_entry.get()
+    end_date = end_date_entry.get()
 
-        prices = sd.fetch_yahoo_finance_stock_data(ticker, start_date_dt, end_date_dt)
+    start_date_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
+    end_date_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
 
-        if prices.empty:
-            CTkMessagebox(title="Error", message="No data found for the ticker and date range", icon="cancel")
-            return
+    prices = sd.fetch_yahoo_finance_stock_data(ticker, start_date_dt, end_date_dt)
 
-        price_list = prices.squeeze().astype(float).tolist()
+    if prices.empty:
+        CTkMessagebox(title="Error", message="No data found for the ticker and date range", icon="cancel")
+        return
 
-        greedy_profit = float(alg.max_profit_greedy_algorithm(price_list))
-        dp_profit = float(alg.max_profit_dynamic_proigramming(price_list))
+    price_list = prices.squeeze().astype(float).tolist()
 
-        result_text = f"Greedy Profit: ${greedy_profit:.2f}\nDP Profit: ${dp_profit:.2f}"
-        if result_label is None:
-            result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12))
-            result_label.grid(row=4, column=0, columnspan=2, pady=10)
-        else:
-            result_label.configure(text=result_text)
-
-        x_dates = prices.index.tolist()
+    x_dates = prices.index.tolist()
         
+    return [x_dates, price_list]
 
-        #checking if a dash thread is already running
-        dash_running = False
-        for t in threading.enumerate():
-            if hasattr(t, 'name') and t.name == 'DashThread':
-                dash_running = True
-                break
+def perform_greedy():
+    check_fields()
+    global result_label
+    price_list = process_input()[1]
+    
+    greedy_profit = float(alg.max_profit_greedy_algorithm(price_list))
+    
+    result_text = f"Greedy Profit: ${greedy_profit:.2f}\n"
+    if result_label is None:
+        result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12))
+        result_label.grid(row=4, column=0, columnspan=3, pady=10)
+    else:
+        result_label.configure(text=result_text)
+    
+def perform_dynamic_programming():
+    check_fields()
+    global result_label
+    price_list = process_input()[1]
+    
+    dp_profit = float(alg.max_profit_dynamic_proigramming(price_list))
 
-        if not dash_running:
-            dash_thread = threading.Thread(target=run_dash_app, args=(ticker, x_dates, price_list), daemon=True)
-            dash_thread.start()
-        else:
-            open_browser()
+    result_text = f"DP Profit: ${dp_profit:.2f}\n"
+    if result_label is None:
+        result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12))
+        result_label.grid(row=4, column=0, columnspan=3, pady=10)
+    else:
+        result_label.configure(text=result_text)
 
-    except Exception as e:
-        CTkMessagebox(title="Error", message=str(e), icon="cancel")
 
+def generate_graph():
+    
+    check_fields()
+    input = process_input()
+    ticker = ticker_entry.get()
+    x_dates, price_list = input[0], input[1]
+
+    #checking if a dash thread is already running
+    dash_running = False
+    for t in threading.enumerate():
+        if hasattr(t, 'name') and t.name == 'DashThread':
+            dash_running = True
+            break
+
+    if not dash_running:
+        dash_thread = threading.Thread(target=run_dash_app, args=(ticker, x_dates, price_list), daemon=True)
+        dash_thread.start()
+    else:
+        open_browser()
+
+#building gui
 
 app = CTk()
 app.title("Stock Market Predictor")
@@ -173,8 +203,16 @@ ctk.CTkLabel(master=app, text="End Date (YYYY-MM-DD):").grid(row=2, column=0, pa
 end_date_entry = CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
 end_date_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-run_btn = CTkButton(master=app, text="Run Analysis & Show Plot", corner_radius=5, command=perform_analysis)
-run_btn.grid(row=3, column=0, columnspan=2, pady=20)
+run_btn = CTkButton(master=app, text="Graph", corner_radius=5, command=generate_graph)
+run_btn.grid(row=3, column=0, padx=10, pady=10)
+
+dp_btn = CTkButton(master=app, text="Dynamic Programming", corner_radius=5, command=perform_dynamic_programming)
+dp_btn.grid(row=3, column=1, padx=10, pady=10)
+
+greedy_btn = CTkButton(master=app, text="Greedy Algorithm", corner_radius=5, command=perform_greedy)
+greedy_btn.grid(row=3, column=2, padx=10, pady=10)
+
+
 
 app.grid_columnconfigure(1, weight=1)
 
