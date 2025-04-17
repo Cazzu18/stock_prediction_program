@@ -9,9 +9,16 @@ import webbrowser
 
 import stock_data as sd
 import alg as alg
+import lstm_model as lm
 
+#global variables
 result_label = None
 dash_running = False
+prices = None #storing historical data
+
+lstm_model_obj = None #to store the trained LSTM model
+lstm_scalar = None #to store the MinMaxScaler object
+lstm_look_back = None #to store the look_back value
 
 def display_result(result_text):
     global result_label
@@ -98,9 +105,10 @@ def run_dash_app(ticker, x_dates, price):
     dash_app.run(debug=True, use_reloader=False)
 
 def process_input():
-    ticker = ticker_entry.get()
-    start_date = start_date_entry.get()
-    end_date = end_date_entry.get()
+    global prices
+    ticker = ticker_entry.get().strip()
+    start_date = start_date_entry.get().strip()
+    end_date = end_date_entry.get().strip()
     try:
         start_date_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -114,14 +122,52 @@ def process_input():
         price_list = prices.squeeze().astype(float).tolist()
         x_dates = prices.index.tolist()
 
+        #train the LSTM model
+        global lstm_model_obj, lstm_scalar, lstm_look_back 
+        lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
+
         return {"ticker": ticker, "x_dates": x_dates, "price_list": price_list}  # Return a dictionary
     except ValueError:
         CTkMessagebox(title="Error", message="Invalid date format. Use YYYY-MM-DD.", icon="cancel")
+        prices = None
         return None
     except Exception as e:
         CTkMessagebox(title="Error", message=f"An error occurred: {e}", icon="cancel")
+        prices = None
         return None
 
+
+def predict_price():
+    global lstm_model_obj, lstm_scalar, lstm_look_back, prices
+
+    if lstm_model_obj is None or lstm_scalar is None or lstm_look_back is None:
+        CTkMessagebox(title="Error", message="LSTM model not trained. Generate graph first.", icon="cancel")
+        return
+    
+    try:
+        predict_date_str = predict_date_entry.get()
+        predict_date = datetime.strptime(predict_date_str, "%Y-%m-%d").date()
+
+        '''
+        We get the last 'look_back' prices from the training data
+        Assuming 'prices' is available from process_input (needs to be fixed)
+        This is a place holder
+        '''
+        last_sequence = prices[-lstm_look_back:].values
+        
+        #we make the prediction
+        predicted_price = lm.predict_lstm_price(lstm_model_obj, lstm_scalar, last_sequence, lstm_look_back)
+
+        #we display the result
+        result_text = f"Predicted price for {predict_date_str}: ${predicted_price:.2f}"
+        display_result(result_text)
+    except ValueError:
+        CTkMessagebox(title="Error", message="Invalid date format. Use YYYY-MM-DD.", icon="cancel")
+    except Exception as e:
+        CTkMessagebox(title="Error", message=f"An error occurred: {e}", icon="cancel")
+
+
+    
 def calculate_and_display(algorithm_name):
     ticker = ticker_entry.get()
     start_date = start_date_entry.get()
@@ -225,7 +271,7 @@ dp_btn.grid(row=4, column=1, padx=10, pady=10)
 greedy_btn = ctk.CTkButton(master=app, text="Greedy Algorithm", corner_radius=5, command=lambda: calculate_and_display("greedy"))
 greedy_btn.grid(row=4, column=2, padx=10, pady=10)
 
-predict_btn = ctk.CTkButton(master=app, text="Predict", corner_radius=5)
+predict_btn = ctk.CTkButton(master=app, text="Predict", corner_radius=5, command=predict_price)
 predict_btn.grid(row=4, column=3, padx=10, pady=10)
 
 app.grid_columnconfigure(1, weight=1)
