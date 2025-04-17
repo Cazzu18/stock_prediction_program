@@ -14,6 +14,7 @@ result_label = None
 dash_running = False
 
 def display_result(result_text):
+    global result_label
     if result_label is None:
         result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12))
         result_label.grid(row=4, column=0, columnspan=3, pady=10)
@@ -96,21 +97,10 @@ def run_dash_app(ticker, x_dates, price):
 
     dash_app.run(debug=True, use_reloader=False)
 
-def check_fields(ticker, start_date, end_date):
-
-    if not ticker or not start_date or not end_date:
-        CTkMessagebox(title="Error", message="Please enter all fields!", icon="cancel")
-        return False  #indicate fields are not valid
-    return True  #indicate fields are valid
-
 def process_input():
     ticker = ticker_entry.get()
     start_date = start_date_entry.get()
     end_date = end_date_entry.get()
-
-    if not check_fields(ticker, start_date, end_date):  # Check fields first
-        return None
-
     try:
         start_date_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -137,25 +127,36 @@ def calculate_and_display(algorithm_name):
     start_date = start_date_entry.get()
     end_date = end_date_entry.get()
 
-    if not check_fields(ticker, start_date, end_date):
-        return  # Exit if fields are invalid
+    if not ticker or not start_date or not end_date:
+        CTkMessagebox(title="Error", message="Please enter all fields!", icon="cancel")
+        return
 
     input_data = process_input()
     if not input_data:
         return  # Exit if process_input failed
 
-    price_list = input_data["price_list"]
-
+    price_list = input_data["price_list"] #list of prices
+    x_dates = input_data["x_dates"] #list of dates
+    
     if algorithm_name == "greedy":
-        profit = float(alg.max_profit_greedy_algorithm(price_list))
-        result_text = f"Greedy Profit: ${profit:.2f}\n"
+        profit, buy_date, sell_date = alg.max_profit_with_dates(price_list, x_dates)
+
+        if buy_date and sell_date:
+            result_text = f"Greedy Profit: ${profit:.2f} per share\nBuy Date: {buy_date.strftime('%Y-%m-%d')}\nSell Date: {sell_date.strftime('%Y-%m-%d')}"
+        else:
+            result_text = "Greedy: No profitable trade found."
+
     elif algorithm_name == "dp":
-        profit = float(alg.max_profit_dynamic_proigramming(price_list))
-        result_text = f"DP Profit: ${profit:.2f}\n"
+        profit, buy_date, sell_date = alg.max_profit_dynamic_programming(price_list, x_dates)
+        
+        if buy_date and sell_date:
+            result_text = f"DP Profit: ${profit:.2f} per share\nBuy Date: {buy_date.strftime('%Y-%m-%d')}\nSell Date: {sell_date.strftime('%Y-%m-%d')}"
+        else:
+            result_text = "DP: No profitable trade found."
+
     else:
         print("Invalid algorithm name")
         return
-
     display_result(result_text)
 
 def generate_graph():
@@ -163,8 +164,9 @@ def generate_graph():
     start_date = start_date_entry.get()
     end_date = end_date_entry.get()
 
-    if not check_fields(ticker, start_date, end_date):
-        return  # Exit if fields are invalid
+    if not ticker or not start_date or not end_date:
+        CTkMessagebox(title="Error", message="Please enter all fields!", icon="cancel")
+        return
 
     input_data = process_input()
     if not input_data:
@@ -210,14 +212,21 @@ ctk.CTkLabel(master=app, text="End Date (YYYY-MM-DD):").grid(row=2, column=0, pa
 end_date_entry = ctk.CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
 end_date_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
+ctk.CTkLabel(master=app, text="Predict Date (YYYY-MM-DD):").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+predict_date_entry = ctk.CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
+predict_date_entry.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
+
 run_btn = ctk.CTkButton(master=app, text="Graph", corner_radius=5, command=generate_graph)
-run_btn.grid(row=3, column=0, padx=10, pady=10)
+run_btn.grid(row=4, column=0, padx=10, pady=10)
 
 dp_btn = ctk.CTkButton(master=app, text="Dynamic Programming", corner_radius=5, command=lambda: calculate_and_display("dp"))
-dp_btn.grid(row=3, column=1, padx=10, pady=10)
+dp_btn.grid(row=4, column=1, padx=10, pady=10)
 
 greedy_btn = ctk.CTkButton(master=app, text="Greedy Algorithm", corner_radius=5, command=lambda: calculate_and_display("greedy"))
-greedy_btn.grid(row=3, column=2, padx=10, pady=10)
+greedy_btn.grid(row=4, column=2, padx=10, pady=10)
+
+predict_btn = ctk.CTkButton(master=app, text="Predict", corner_radius=5)
+predict_btn.grid(row=4, column=3, padx=10, pady=10)
 
 app.grid_columnconfigure(1, weight=1)
 
