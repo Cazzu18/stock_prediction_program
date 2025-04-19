@@ -122,6 +122,10 @@ def process_input():
         price_list = prices.squeeze().astype(float).tolist()
         x_dates = prices.index.tolist()
 
+        if not price_list or not x_dates:
+            CTkMessagebox(title="Error", message="No data after processing. Check ticker and date range.", icon="cancel")
+            return None
+
         #train the LSTM model
         global lstm_model_obj, lstm_scalar, lstm_look_back 
         lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
@@ -148,6 +152,14 @@ def predict_price():
         predict_date_str = predict_date_entry.get()
         predict_date = datetime.strptime(predict_date_str, "%Y-%m-%d").date()
 
+        if prices is None or len(prices) == 0:
+            CTkMessagebox(title="Error", message="No data available. Generate graph first.", icon="cancel")
+            return
+        
+        if len(prices) < lstm_look_back:
+            CTkMessagebox(title="Error", message="Not enough data to make a prediction.", icon="cancel")
+            return
+        
         '''
         We get the last 'look_back' prices from the training data
         Assuming 'prices' is available from process_input (needs to be fixed)
