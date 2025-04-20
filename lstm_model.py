@@ -4,7 +4,7 @@ from sklearn.preprocessing import MinMaxScaler #used for sclaing data to a range
 from tensorflow.keras.models import Sequential #used to create a linear stack of layer for the neural network
 from tensorflow.keras.layers import LSTM, Dense, Dropout #LSTM is a type of recurrent neural network layer suitable for handling sequential data. Dense is a fully connected layer used for outputting final prediction
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping #to prevent the model from training for too many epochs and overfitting(model has learned the training data too well and is not generalizing to new data)
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint #to prevent the model from training for too many epochs and overfitting(model has learned the training data too well and is not generalizing to new data)
 '''
 This function defines and trains the LSTM(long short-term memory model) neural network model
 
@@ -21,12 +21,13 @@ def create_lstm_model(x_train, y_train, look_back = 1):
                         x_train.shape[2] is the number of features per time step(which is 1 in this case, as we are only using closing price)
     '''
   
-    model.add(LSTM(50, activation='relu', input_shape=(look_back, x_train.shape[2]), return_sequences=True))#Adds an LSTM later with 100 units(memory cells)
+    model.add(LSTM(60, activation='tanh', input_shape=(look_back, x_train.shape[2]), return_sequences=True))#Adds an LSTM later with 100 units(memory cells)
     model.add(Dropout(0.3))
-    model.add(LSTM(50, activation='relu'))
+    model.add(LSTM(120, activation='tanh'))
     model.add(Dropout(0.3))
 
-    model.add(Dense(1))#adds a dense (fully connected) layer(organized structures that process information sequentially. Each layer transforms data from the previous layer, ultimately leading to a final output or prediction. ) with 1 unit, which outputs the final predicted prices
+    model.add(Dense(20))#adds a dense (fully connected) layer(organized structures that process information sequentially. Each layer transforms data from the previous layer, ultimately leading to a final output or prediction. ) with 1 unit, which outputs the final predicted prices
+    model.add(Dense(1))
     model.compile(optimizer=Adam(learning_rate=0.001), loss='mse') #configures the learning process. optimzier = 'adam' uses the adam optimization algorithm. loss='mse' uses the mean squared error loss function, whihc is common for regression problems
     #model.fit(x_train, y_train, epochs=200, verbose=0)#trains the model using the training data. epoch =200 the number of times the entire training dataset is passed through the model. verbose = 0 suppresses the training progress output
 
@@ -80,10 +81,10 @@ def train_lstm_model(prices):
 
     #creating and training the LSTM model
     model = create_lstm_model(x_train, y_train, look_back) #creates and trains the LSTM model using training data
+    early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    checkpoint = ModelCheckpoint('best_lstm_model.h5', monitor='val_loss', save_best_only=True)
 
-     #implement EarlyStopping
-    early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)  #we stop if loss doesn't improve for 10 epochs
-    model.fit(x_train, y_train, epochs=200, verbose=0, callbacks=[early_stopping])  # Add callbacks to the fit method
+    model.fit(x_train, y_train, batch_size=32, epochs=100, verbose=1, callbacks=[early_stop, checkpoint])  # Add callbacks to the fit method
 
     return model, scaler, look_back #return scalar for inverse transforming predictions(involves reversing a transformation applied to data before making a prediction, so the model output can be interpreted in the ORIGINAL SCALE)
 
