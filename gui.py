@@ -23,8 +23,8 @@ lstm_look_back = None #to store the look_back value
 def display_result(result_text):
     global result_label
     if result_label is None:
-        result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12))
-        result_label.grid(row=4, column=0, columnspan=3, pady=10)
+        result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12), wraplength=500, justify="left")
+        result_label.grid(row=5, column=0, columnspan=5, pady=(10,5), padx=10, sticky="w")
     else:
         result_label.configure(text=result_text)
 
@@ -259,7 +259,7 @@ y = (screen_height / 2) - (window_height / 2)
 app.geometry(f'{window_width}x{window_height}+{int(x)}+{int(y)}')
 
 ctk.CTkLabel(master=app, text="Stock Ticker:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
-ticker_entry = ctk.CTkEntry(master=app, placeholder_text="e.g., AAPL")
+ticker_entry = ctk.CTkEntry(master=app, placeholder_text="e.g., AAPL", width=200, corner_radius=6)
 ticker_entry.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
 
 ctk.CTkLabel(master=app, text="Start Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=5, sticky="w")
@@ -275,16 +275,16 @@ predict_date_entry = ctk.CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
 predict_date_entry.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
 
 run_btn = ctk.CTkButton(master=app, text="Graph", corner_radius=5, command=generate_graph)
-run_btn.grid(row=4, column=0, padx=10, pady=10)
+run_btn.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
 
 dp_btn = ctk.CTkButton(master=app, text="Dynamic Programming", corner_radius=5, command=lambda: calculate_and_display("dp"))
-dp_btn.grid(row=4, column=1, padx=10, pady=10)
+dp_btn.grid(row=4, column=1, padx=10, pady=5, sticky="ew")
 
 greedy_btn = ctk.CTkButton(master=app, text="Greedy Algorithm", corner_radius=5, command=lambda: calculate_and_display("greedy"))
-greedy_btn.grid(row=4, column=2, padx=10, pady=10)
+greedy_btn.grid(row=4, column=2, padx=10, pady=5, sticky="ew")
 
 predict_btn = ctk.CTkButton(master=app, text="Predict", corner_radius=5, command=predict_price)
-predict_btn.grid(row=4, column=3, padx=10, pady=10)
+predict_btn.grid(row=4, column=3, padx=10, pady=5, sticky="ew")
 
 app.grid_columnconfigure(1, weight=1)
 
