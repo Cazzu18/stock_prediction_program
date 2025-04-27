@@ -64,20 +64,20 @@ def run_dash_app(ticker, x_dates, price):
             yaxis_title="Closing Price",
             xaxis = dict(
                 showgrid = True,
-                gridcolor='rgba(100, 100, 100, 0.5)', #to make grid lines lighter
+                gridcolor='#e3a1fa', #to make grid lines lighter
                 color = 'white'
             ),
 
             yaxis=dict(
             showgrid=True,
-            gridcolor='rgba(100, 100, 100, 0.5)',
+            gridcolor='#e3a1fa',
             color='white' #axis text color
             ),
 
             font=dict(
                 family="Sans-serif, Arial",
                 size=20,
-                color="white" #default font color
+                color="#bf58e4" #default font color
             ),
 
             paper_bgcolor='rgb(17,17,17)', #match dark theme background
@@ -241,7 +241,7 @@ def generate_graph():
 app = ctk.CTk()
 app.title("Stock Market Predictor")
 app.configure(fg_color="#180a30", corner_radius=0)
-app.iconbitmap("./image/logo.ico")
+app.iconbitmap("./image/icon.ico")
 window_width = 750
 window_height = 600
 screen_width = app.winfo_screenwidth()
