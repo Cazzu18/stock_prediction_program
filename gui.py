@@ -6,7 +6,7 @@ from datetime import datetime
 import threading
 import time
 import webbrowser
-
+from PIL import Image
 import stock_data as sd
 import alg as alg
 import lstm_model as lm
@@ -80,7 +80,6 @@ def run_dash_app(ticker, x_dates, price):
                 color="white" #default font color
             ),
 
-
             paper_bgcolor='rgb(17,17,17)', #match dark theme background
             plot_bgcolor='rgb(17,17,17)',  #match dark theme background
             margin=dict(l=40, r=40, t=60, b=40), #adjusting margins
@@ -91,7 +90,6 @@ def run_dash_app(ticker, x_dates, price):
 
     dash_app.layout = html.Div([
         dcc.Graph(
-            
             id='stock-graph',
             responsive = True,
             figure= fig,
@@ -101,7 +99,6 @@ def run_dash_app(ticker, x_dates, price):
     browser_thread = threading.Thread(target=open_browser, daemon=True)
     browser_thread.start()
     
-
     dash_app.run(debug=True, use_reloader=False)
 
 def process_input():
@@ -140,7 +137,6 @@ def process_input():
         prices = None
         return None
 
-
 def predict_price():
     global lstm_model_obj, lstm_scalar, lstm_look_back, prices
 
@@ -178,8 +174,6 @@ def predict_price():
     except Exception as e:
         CTkMessagebox(title="Error", message=f"An error occurred: {e}", icon="cancel")
 
-
-    
 def calculate_and_display(algorithm_name):
     ticker = ticker_entry.get()
     start_date = start_date_entry.get()
@@ -246,10 +240,10 @@ def generate_graph():
 #building gui
 app = ctk.CTk()
 app.title("Stock Market Predictor")
-ctk.set_appearance_mode("dark")
-
-window_width = 600
-window_height = 500
+app.configure(fg_color="#180a30", corner_radius=0)
+app.iconbitmap("./image/logo.ico")
+window_width = 750
+window_height = 600
 screen_width = app.winfo_screenwidth()
 screen_height = app.winfo_screenheight()
 
@@ -257,35 +251,63 @@ x = (screen_width / 2) - (window_width / 2)
 y = (screen_height / 2) - (window_height / 2)
 
 app.geometry(f'{window_width}x{window_height}+{int(x)}+{int(y)}')
+app.minsize(window_width, window_height)
 
-ctk.CTkLabel(master=app, text="Stock Ticker:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
-ticker_entry = ctk.CTkEntry(master=app, placeholder_text="e.g., AAPL", width=200, corner_radius=6)
+logo_frame = ctk.CTkFrame(master=app, fg_color = "#180a30")
+logo_frame.grid(row=0, column=0, columnspan=4, padx=50, pady=(30, 10), sticky="ew")
+logo_image = ctk.CTkImage(light_image=Image.open("./image/logo-new.png"), dark_image=Image.open("./image/logo-new.png"), size=(250, 250))
+logo_label = ctk.CTkLabel(master=logo_frame, image=logo_image, text="")
+logo_label.pack(pady=5)
+#Input fields
+input_frame = ctk.CTkFrame(master=app, fg_color="#362257")
+input_frame.grid(row=1, column=0, columnspan=4, padx=60, pady=(30,30), sticky="ew")
+
+ctk.CTkLabel(master=input_frame, text="Stock Ticker:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+ticker_entry = ctk.CTkEntry(master=input_frame, placeholder_text="e.g., AAPL", width=200, corner_radius=6)
 ticker_entry.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
 
-ctk.CTkLabel(master=app, text="Start Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=5, sticky="w")
-start_date_entry = ctk.CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
+ctk.CTkLabel(master=input_frame, text="Start Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=5, sticky="w")
+start_date_entry = ctk.CTkEntry(master=input_frame, placeholder_text="YYYY-MM-DD")
 start_date_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
-ctk.CTkLabel(master=app, text="End Date (YYYY-MM-DD):").grid(row=2, column=0, padx=10, pady=5, sticky="w")
-end_date_entry = ctk.CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
+ctk.CTkLabel(master=input_frame, text="End Date (YYYY-MM-DD):").grid(row=2, column=0, padx=10, pady=5, sticky="w")
+end_date_entry = ctk.CTkEntry(master=input_frame, placeholder_text="YYYY-MM-DD")
 end_date_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-ctk.CTkLabel(master=app, text="Predict Date (YYYY-MM-DD):").grid(row=3, column=0, padx=10, pady=5, sticky="w")
-predict_date_entry = ctk.CTkEntry(master=app, placeholder_text="YYYY-MM-DD")
+ctk.CTkLabel(master=input_frame, text="Predict Date (YYYY-MM-DD):").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+predict_date_entry = ctk.CTkEntry(master=input_frame, placeholder_text="YYYY-MM-DD")
 predict_date_entry.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
 
-run_btn = ctk.CTkButton(master=app, text="Graph", corner_radius=5, command=generate_graph)
-run_btn.grid(row=4, column=0, padx=10, pady=5, sticky="ew")
+input_frame.grid_columnconfigure(1, weight=1)
+input_frame.grid_rowconfigure(3, weight=1)
 
-dp_btn = ctk.CTkButton(master=app, text="Dynamic Programming", corner_radius=5, command=lambda: calculate_and_display("dp"))
-dp_btn.grid(row=4, column=1, padx=10, pady=5, sticky="ew")
+button_frame = ctk.CTkFrame(master=app, fg_color="#362257")
+button_frame.grid(row=2, column=0, columnspan=4, padx=50, pady=(5,10), sticky="ew")
 
-greedy_btn = ctk.CTkButton(master=app, text="Greedy Algorithm", corner_radius=5, command=lambda: calculate_and_display("greedy"))
-greedy_btn.grid(row=4, column=2, padx=10, pady=5, sticky="ew")
+run_btn = ctk.CTkButton(master=button_frame, text="Graph", corner_radius=5, command=generate_graph, fg_color="#9220e1", text_color="white", hover_color="#bf58e4")
+run_btn.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
 
-predict_btn = ctk.CTkButton(master=app, text="Predict", corner_radius=5, command=predict_price)
-predict_btn.grid(row=4, column=3, padx=10, pady=5, sticky="ew")
+dp_btn = ctk.CTkButton(master=button_frame, text="Dynamic Programming", corner_radius=5, command=lambda: calculate_and_display("dp"),fg_color="#9220e1", text_color="white", hover_color="#bf58e4")
+dp_btn.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
 
-app.grid_columnconfigure(1, weight=1)
+greedy_btn = ctk.CTkButton(master=button_frame, text="Greedy Algorithm", corner_radius=5, command=lambda: calculate_and_display("greedy"),fg_color="#9220e1", text_color="white", hover_color="#bf58e4")
+greedy_btn.grid(row=0, column=2, padx=10, pady=5, sticky="ew")
+
+predict_btn = ctk.CTkButton(master=button_frame, text="Predict", corner_radius=5, command=predict_price, fg_color="#9220e1", text_color="white", hover_color="#bf58e4")
+predict_btn.grid(row=0, column=3, padx=10, pady=5, sticky="ew")
+
+button_frame.grid_columnconfigure(0, weight=1)
+button_frame.grid_columnconfigure(1, weight=1)
+button_frame.grid_columnconfigure(2, weight=1)
+button_frame.grid_columnconfigure(3, weight=1)
+
+app.grid_columnconfigure(0, weight=1)
+
+from datetime import date, timedelta
+today = date.today()
+year_ago = today - timedelta(days=365)
+start_date_entry.insert(0, year_ago.strftime("%Y-%m-%d"))
+end_date_entry.insert(0, today.strftime("%Y-%m-%d"))
+predict_date_entry.insert(0, (today + timedelta(days=1)).strftime("%Y-%m-%d"))
 
 app.mainloop()
