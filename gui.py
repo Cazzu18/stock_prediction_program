@@ -23,7 +23,7 @@ lstm_look_back = None #to store the look_back value
 def display_result(result_text):
     global result_label
     if result_label is None:
-        result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 12), wraplength=500, justify="left")
+        result_label = ctk.CTkLabel(app, text=result_text, font=("Arial", 16), text_color= "white", wraplength=500, justify="left")
         result_label.grid(row=5, column=0, columnspan=5, pady=(10,5), padx=10, sticky="w")
     else:
         result_label.configure(text=result_text)
