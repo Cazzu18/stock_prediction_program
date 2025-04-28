@@ -11,6 +11,8 @@ import stock_data as sd
 import alg as alg
 import lstm_model as lm
 
+import sys
+
 result_label = None
 dash_running = False
 prices = None
@@ -18,6 +20,9 @@ prices = None
 lstm_model_obj = None
 lstm_scalar = None
 lstm_look_back = None
+
+# Track the Dash app thread
+dash_app_thread = None
 
 def display_result(result_text):
     global result_label
@@ -74,7 +79,7 @@ def run_dash_app(ticker, x_dates, price):
 
     browser_thread = threading.Thread(target=open_browser, daemon=True)
     browser_thread.start()
-    dash_app.run(debug=True, use_reloader=False)
+    dash_app.run(debug=False, use_reloader=False)
 
 def process_input():
     global prices
@@ -99,9 +104,6 @@ def process_input():
             CTkMessagebox(title="Error", message="No data after processing. Check ticker and date range.", icon="cancel")
             return None
 
-        global lstm_model_obj, lstm_scalar, lstm_look_back
-        lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
-
         return {"ticker": ticker, "x_dates": x_dates, "price_list": price_list}
     except ValueError:
         CTkMessagebox(title="Error", message="Invalid date format. Use YYYY-MM-DD.", icon="cancel")
@@ -115,16 +117,21 @@ def process_input():
 def predict_price():
     global lstm_model_obj, lstm_scalar, lstm_look_back, prices
 
-    if lstm_model_obj is None or lstm_scalar is None or lstm_look_back is None:
-        CTkMessagebox(title="Error", message="LSTM model not trained. Generate graph first.", icon="cancel")
-        return
-
     try:
-        if prices is None or len(prices) == 0:
-            CTkMessagebox(title="Error", message="No data available. Generate graph first.", icon="cancel")
+        input_data = process_input()
+        if not input_data:
             return
 
-        if len(prices) < lstm_look_back:
+        price_list = input_data["price_list"]
+        x_dates = input_data["x_dates"]
+
+        lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
+
+        if lstm_model_obj is None or lstm_scalar is None or lstm_look_back is None:
+            CTkMessagebox(title="Error", message="Failed to train LSTM model.", icon="cancel")
+            return
+
+        if len(price_list) < lstm_look_back:
             CTkMessagebox(title="Error", message="Not enough data to make a prediction.", icon="cancel")
             return
 
@@ -188,14 +195,11 @@ def generate_graph():
     x_dates = input_data["x_dates"]
     price_list = input_data["price_list"]
 
-    global dash_running
-    if not dash_running:
-        dash_thread = threading.Thread(target=run_dash_app, args=(ticker, x_dates, price_list), daemon=True)
-        dash_thread.name = "DashThread"
-        dash_thread.start()
-        dash_running = True
-    else:
-        open_browser()
+    dash_thread = threading.Thread(target=run_dash_app, args=(ticker, x_dates, price_list), daemon=True)
+    dash_thread.name = "DashThread"
+    dash_thread.start()
+
+    run_btn.configure(state="disabled")
 
 app = ctk.CTk()
 app.title("Stock Market Predictor")
