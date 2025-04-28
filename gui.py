@@ -45,7 +45,7 @@ def run_dash_app(ticker, x_dates, price):
             y = price,
             mode = 'lines',
             name = ticker,
-            line=dict(color='rgb(178, 194, 219)', width=2)
+            line=dict(color='rgb(146,32,225)', width=2)
         )
     ])
 
@@ -64,20 +64,20 @@ def run_dash_app(ticker, x_dates, price):
             yaxis_title="Closing Price",
             xaxis = dict(
                 showgrid = True,
-                gridcolor='#e3a1fa', #to make grid lines lighter
+                gridcolor='#fcfcfc', #to make grid lines lighter
                 color = 'white'
             ),
 
             yaxis=dict(
             showgrid=True,
-            gridcolor='#e3a1fa',
+            gridcolor='#fcfcfc',
             color='white' #axis text color
             ),
 
             font=dict(
                 family="Sans-serif, Arial",
                 size=20,
-                color="#bf58e4" #default font color
+                color="#fcfcfc" #default font color
             ),
 
             paper_bgcolor='rgb(17,17,17)', #match dark theme background
