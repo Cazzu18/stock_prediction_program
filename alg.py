@@ -1,0 +1,63 @@
+def max_profit_dynamic_programming(prices, dates):
+    n = len(prices)
+
+    if n < 2:
+        return 0, None, None
+    
+    #dp table to store maximum profit up to every day
+    dp = [0] * n
+
+    #variables to track buy and sell dates
+    buy_date = None
+    sell_date = None
+    max_profit = 0
+
+    for i in range(1, n):
+        profit_if_sell_now = prices[i] - prices[0] #assuming we bought on day 0
+
+        #check previous days for better buying opportunities
+        for j in range(1, i):
+            profit_if_sell_now = max(profit_if_sell_now, prices[i] - prices[j])
+
+        #updating dp table with maximum profit up to day i
+        dp[i] = max(dp[i-1], profit_if_sell_now)
+        
+        #updating buy and sell dates if a better proffit is found
+        if dp[i] > max_profit:
+            max_profit = dp[i]
+
+            #finding corresponding buy and sell dates
+            for k in range(i):
+                if prices[i] - prices[k] == dp[i]:
+                    buy_date = dates[k]
+                    sell_date = dates[i]
+                    break
+
+    return max_profit, buy_date, sell_date
+    
+
+def max_profit_with_dates(prices, data):
+    if not prices or len(prices) != len(data):
+        return 0, None, None #handling empty or mismatched data
+    
+    min_price = float('inf')
+    max_profit = 0
+    buy_date = None
+    sell_date = None
+    current_buy_date = None
+
+    #make locally optimal choices at each step - greedy algorithm
+    for i, price in enumerate(prices):
+        #buy when the price is the lowest
+        if price < min_price:
+            min_price = price
+            current_buy_date = data[i] #potential buy date
+
+        #sell when the profit is highest
+        elif price - min_price > max_profit:
+            max_profit = price - min_price
+            buy_date = current_buy_date
+            sell_date = data[i] #potential sell date
+
+    return max_profit, buy_date, sell_date
+            
