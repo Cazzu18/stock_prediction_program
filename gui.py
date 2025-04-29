@@ -10,6 +10,7 @@ from PIL import Image
 import stock_data as sd
 import alg as alg
 import lstm_model as lm
+import sys
 
 #global variables
 result_label = None
@@ -20,6 +21,7 @@ lstm_model_obj = None #to store the trained LSTM model
 lstm_scalar = None #to store the MinMaxScaler object
 lstm_look_back = None #to store the look_back value
 
+dash_app_thread = None
 def display_result(result_text):
     global result_label
     if result_label is None:
@@ -99,7 +101,7 @@ def run_dash_app(ticker, x_dates, price):
     browser_thread = threading.Thread(target=open_browser, daemon=True)
     browser_thread.start()
     
-    dash_app.run(debug=True, use_reloader=False)
+    dash_app.run(debug=False, use_reloader=False)
 
 def process_input():
     global prices
@@ -123,10 +125,6 @@ def process_input():
             CTkMessagebox(title="Error", message="No data after processing. Check ticker and date range.", icon="cancel")
             return None
 
-        #train the LSTM model
-        global lstm_model_obj, lstm_scalar, lstm_look_back 
-        lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
-
         return {"ticker": ticker, "x_dates": x_dates, "price_list": price_list}  # Return a dictionary
     except ValueError:
         CTkMessagebox(title="Error", message="Invalid date format. Use YYYY-MM-DD.", icon="cancel")
@@ -140,37 +138,40 @@ def process_input():
 def predict_price():
     global lstm_model_obj, lstm_scalar, lstm_look_back, prices
 
-    if lstm_model_obj is None or lstm_scalar is None or lstm_look_back is None:
-        CTkMessagebox(title="Error", message="LSTM model not trained. Generate graph first.", icon="cancel")
-        return
-    
     try:
-        predict_date_str = predict_date_entry.get()
-        predict_date = datetime.strptime(predict_date_str, "%Y-%m-%d").date()
+        input_data = process_input()
 
-        if prices is None or len(prices) == 0:
-            CTkMessagebox(title="Error", message="No data available. Generate graph first.", icon="cancel")
+        if not input_data:
             return
         
-        if len(prices) < lstm_look_back:
+        price_list = input_data["price_list"]
+        x_dates = input_data["x_dates"]
+ 
+        lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
+ 
+        if lstm_model_obj is None or lstm_scalar is None or lstm_look_back is None:
+            CTkMessagebox(title="Error", message="Failed to train LSTM model.", icon="cancel")
+            return
+ 
+        if len(price_list) < lstm_look_back:
             CTkMessagebox(title="Error", message="Not enough data to make a prediction.", icon="cancel")
             return
-        
+
         '''
         We get the last 'look_back' prices from the training data
         Assuming 'prices' is available from process_input (needs to be fixed)
         This is a place holder
         '''
-        last_sequence = prices[-lstm_look_back:].values
         
-        #we make the prediction
+        last_sequence = prices[-lstm_look_back:].values
         predicted_price = lm.predict_lstm_price(lstm_model_obj, lstm_scalar, last_sequence, lstm_look_back)
 
-        #we display the result
-        result_text = f"Predicted price for {predict_date_str}: ${predicted_price:.2f}"
-        display_result(result_text)
-    except ValueError:
-        CTkMessagebox(title="Error", message="Invalid date format. Use YYYY-MM-DD.", icon="cancel")
+        if predicted_price is not None:
+            result_text = f"Predicted next price: ${predicted_price:.2f}"
+            display_result(result_text)
+        else:
+            CTkMessagebox(title="Prediction Failed", message="Prediction failed. Please try again.", icon="cancel")
+
     except Exception as e:
         CTkMessagebox(title="Error", message=f"An error occurred: {e}", icon="cancel")
 
@@ -228,14 +229,11 @@ def generate_graph():
     x_dates = input_data["x_dates"]
     price_list = input_data["price_list"]
 
-    global dash_running  # Use the global flag
-    if not dash_running:
-        dash_thread = threading.Thread(target=run_dash_app, args=(ticker, x_dates, price_list), daemon=True)
-        dash_thread.name = "DashThread"  # Set the thread name
-        dash_thread.start()
-        dash_running = True  # Set the flag to True
-    else:
-        open_browser()
+    dash_thread = threading.Thread(target=run_dash_app, args=(ticker, x_dates, price_list), daemon=True)
+    dash_thread.name = "DashThread"
+    dash_thread.start()
+ 
+    run_btn.configure(state="disabled")
 
 #building gui
 app = ctk.CTk()
