@@ -1,6 +1,7 @@
 import numpy as np #we use NumPy for numerical operations, especially when we work with arrays
 import pandas as pd #used for data manipulation and analysis, especially DataFrame
 from sklearn.preprocessing import MinMaxScaler #used for sclaing data to a range between 0 and 1. Important for neural networks to improve training stability and performance
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from tensorflow.keras.models import Sequential #used to create a linear stack of layer for the neural network
 from tensorflow.keras.layers import LSTM, Dense, Dropout #LSTM is a type of recurrent neural network layer suitable for handling sequential data. Dense is a fully connected layer used for outputting final prediction
 from tensorflow.keras.optimizers import Adam
@@ -85,8 +86,26 @@ def train_lstm_model(prices):
     checkpoint = ModelCheckpoint('best_lstm_model.h5', monitor='val_loss', save_best_only=True)
 
     model.fit(x_train, y_train, batch_size=32, epochs=100, verbose=1, callbacks=[early_stop, checkpoint])  # Add callbacks to the fit method
+    
+    # --- Evaluate Model Performance ---
+    # Predict on test set
+    y_pred_scaled = model.predict(x_test)
+    y_pred = scaler.inverse_transform(y_pred_scaled)
+    y_true = scaler.inverse_transform(y_test.reshape(-1, 1))
 
-    return model, scaler, look_back #return scalar for inverse transforming predictions(involves reversing a transformation applied to data before making a prediction, so the model output can be interpreted in the ORIGINAL SCALE)
+    # Calculate metrics
+    mae = mean_absolute_error(y_true, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    r2 = r2_score(y_true, y_pred)
+
+    print(f"\n📊 Model Evaluation Metrics:")
+    print(f"MAE: ${mae:.2f}")
+    print(f"RMSE: ${rmse:.2f}")
+    print(f"MAPE: {mape:.2f}%")
+    print(f"R²: {r2:.3f}\n")
+
+    return model, scaler, look_back, {"MAE": mae, "RMSE": rmse, "MAPE": mape, "R2": r2} #return scalar for inverse transforming predictions(involves reversing a transformation applied to data before making a prediction, so the model output can be interpreted in the ORIGINAL SCALE)
 
 '''
 This function uses the trained LSTM model to predict the stock price for a given input sequence.
@@ -96,6 +115,9 @@ This function uses the trained LSTM model to predict the stock price for a given
         last_sequence: the last look_back data points(stock prices) to use as input for the prediction
         look_back: the number of previous time steps to use as input features
 '''
+
+
+
 def predict_lstm_price(model, scaler, last_sequence, look_back):
     #scaling lastsequence
     scaled_last_sequence = scaler.transform(last_sequence.reshape(-1, 1)) #we scale the input sequence using the same MinMaxScaler object used for training

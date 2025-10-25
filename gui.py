@@ -147,7 +147,7 @@ def predict_price():
         price_list = input_data["price_list"]
         x_dates = input_data["x_dates"]
  
-        lstm_model_obj, lstm_scalar, lstm_look_back = lm.train_lstm_model(prices)
+        lstm_model_obj, lstm_scalar, lstm_look_back, metrics = lm.train_lstm_model(prices)
  
         if lstm_model_obj is None or lstm_scalar is None or lstm_look_back is None:
             CTkMessagebox(title="Error", message="Failed to train LSTM model.", icon="cancel")
@@ -167,8 +167,14 @@ def predict_price():
         predicted_price = lm.predict_lstm_price(lstm_model_obj, lstm_scalar, last_sequence, lstm_look_back)
 
         if predicted_price is not None:
-            result_text = f"Predicted next price: ${predicted_price:.2f}"
-            display_result(result_text)
+            result_text = (
+                f"Predicted next price: ${predicted_price:.2f}\n\n"
+                f"Model Performance:\n"
+                f"MAE: ${metrics['MAE']:.2f}\n"
+                f"RMSE: ${metrics['RMSE']:.2f}\n"
+                f"MAPE: {metrics['MAPE']:.2f}%\n"
+                f"R²: {metrics['R2']:.3f}"
+            )
         else:
             CTkMessagebox(title="Prediction Failed", message="Prediction failed. Please try again.", icon="cancel")
 
